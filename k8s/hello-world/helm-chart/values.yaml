@@ -1,0 +1,18 @@
+replicaCount: 1
+image:
+  repository: localhost:32000/hello-world
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 80
+
+autoscaling:
+  enabled: false
+  
+serviceAccount:
+  create: false
+
+ingress:
+  enabled: false

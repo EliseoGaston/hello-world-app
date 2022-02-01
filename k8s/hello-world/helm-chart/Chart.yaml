@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hello-world
+description: A Helm chart for deploying a hello-world to Kubernetes cluster
+type: application
+version: 0.1.0
+appVersion: "latest"
