@@ -20,6 +20,14 @@ I use [MicroK8s](https://microk8s.io). You can install it by:
      <dt>> `sudo snap install microk8s --classic`</dt>
      <dt>> `microk8s status --wait-ready`</dt>
      <dt>> `microk8s enable dns storage`</dt>
+     <dt>> `microk8s enable metallb`</dt>
+     <dl>
+   
+## Install a LoadBalancer solution for bare metal
+I use [MetalLB]() as the bare metal load balancer solution. I'll use the addon directly that microk8s provides, if you need to install the package by yourself it will need to deploy a configMap file to configure the range.
+    <dl>
+     <dt>>`microk8s enable metallb`</dt>
+     <dt>> Enter the range of ip you want him to manage for this. In my case I'll put (192.168.100.100-192.168.100.130)</dt>
      <dl>
 </br>
 
@@ -57,7 +65,7 @@ I use [MicroK8s](https://microk8s.io). You can install it by:
       <dt>> `helm install hello-world-release k8s/hello-world/helm-chart/TBD`</dt>
     </dl>
    You can now see the release using `helm list` and you can also check that the hello-world-release deployment is successfully running on the k8s cluster by doing `kubectl get deploy` and `kubectl get service`
-   We have created a `ClusterIP` service for this deployment so we can only access from inside the cluster. You can `kubectl exec -it (kubeclt get pods --selector=app.kubernetes.io/name=hello-world --output name) -- sh` and now you can `curl http://localhost` to see the hello-world html site.  
+   We have created a `ClusterIP` service for this deployment so we can only access from inside the cluster. You can `kubectl exec -it $(k get pods --selector=app.kubernetes.io/name=hello-world --output name) -- sh` and now you can `curl http://localhost` to see the hello-world html site.  
 </br>
 </br>
 
@@ -67,11 +75,25 @@ I use [MicroK8s](https://microk8s.io). You can install it by:
     <dl>
       <dt>> `helm repo add traefik https://helm.traefik.io/traefik`</dt>
       <dt>> `helm repo update`</dt>
-      <dt>> `helm install -n traefik --create-namespace traefik traefik/traefik` </dt>
+      <dt>> `helm install -n traefik --create-namespace traefik traefik/traefik --values k8s/hello-world/ingress/traefik/values.yaml` </dt>
     </dl>
+   If you have already configured metallb correctly, now you can see the EXTERNAL-IP assigned to traefik service using `kubectl get all -n traefik`.
+   We are using a values file because we want to enable he dashboard and tweak some other defaults. It's okey if you do not want to change anything. It will still work the same. 
    
-## 2. Create IngressRoute
-   You 
-## 3. Enable dashboard 
+## 2. Create IngressRoute for our service
+   You have already a ClusterIP service for our hello-world backend. To expose this to the internet using traefik, as an ingress controller, you need to can create an ingress route that redirect to the backend service. 
+      <dl>
+        <dt>> `kubectl apply -f k8s/hello-world/ingress/traefik/hello-world-ingress-route.yaml`</dt>
+    </dl>
+   Here we are defining a route that match `hello-world.local` on default http traefik endpoint called `web` and redirecting traffic to service `hello-world-release` on default http port 80, that what we deploy with our helm chart.
+   To make it work we should use a DNS server or something similiar beyond your network, but for demo porpouse and simpler I'll make use of /etc/hosts file under my system.
+       <dl>
+         <dt>> `kubectl get service -n traefik`</dt>
+         <dt>> Copy the EXTERNAL-IP from the LoadBalancer called traefik</dt>
+         <dt>> `sudo vim /etc/hosts`</dt>
+         <dt>> Add a line at the bottom of the file to include {EXTERNAL-IP}{space-space}hello-world.local</dt>
+         <dt>> Save and exit</dt>
+    </dl>
+   You should be able to navigate to hello-world.local on your favorite browser to see the hello-world app.
 
 

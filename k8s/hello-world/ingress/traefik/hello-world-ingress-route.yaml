@@ -9,5 +9,5 @@ spec:
     - match: Host(`hello-world.local`)
       kind: Rule
       services:
-        - name: hello-world-svc
+        - name: hello-world-release
           port: 80
