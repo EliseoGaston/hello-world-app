@@ -1,8 +1,7 @@
 
 # Pre-Requisits
-I use arch/debian/ubuntu-based systems. Also we can test *BSDs. 
-If you want to use OSX or Windows is your problem (ahahahah)
-
+ I'm using ubuntu 20.04 here.. You'll need just a code editor
+ 
 ## Install docker
 I use [Docker](https://docs.docker.com). You can install it by:
     <dl>
