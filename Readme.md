@@ -19,29 +19,26 @@ I use [MicroK8s](https://microk8s.io). You can install it by:
      <dt>> `sudo snap install microk8s --classic`</dt>
      <dt>> `microk8s status --wait-ready`</dt>
      <dt>> `microk8s enable dns storage`</dt>
-     <dt>> `microk8s enable metallb`</dt>
      <dl>
    
-## Install a LoadBalancer solution for bare metal
-I use [MetalLB]() as the bare metal load balancer solution. I'll use the addon directly that microk8s provides, if you need to install the package by yourself it will need to deploy a configMap file to configure the range.
+## Install a LoadBalancer solution for bare metal deployment
+I use [MetalLB](https://metallb.org/) for local load balancer solution. I'll use the addon directly that microk8s provides. (if you need to install the package by yourself you'll need to deploy a configMap file to configure the range, check out the docs)
     <dl>
-     <dt>>`microk8s enable metallb`</dt>
-     <dt>> Enter the range of ip you want him to manage for this. In my case I'll put (192.168.100.100-192.168.100.130)</dt>
-     <dl>
+     <dt>> `microk8s enable metallb`</dt>
+     <dt>> Enter the range of ip you want metallb handles for you </dt>
+    <dl>
 </br>
 
 # Creating container image
 ## 1. Prepare registry
-   You can make use of docker hub or any other private registry out there   
+   You can use docker hub or any other private registry out there   
    I use [microk8s built-in registry](https://microk8s.io/docs/registry-built-in)  
-   You can enable it by `microk8s enable registry`. This will create a generic v2 image repository on your own kubernetes cluster. (That's why we use localhost:32000 instead of a outside internet url)
+   You can enable it by `microk8s enable registry`. This will create a generic v2 image repository on your own kubernetes cluster. (That's why we'll use localhost:32000)
 ## 2. Generate Image for project
-   Now that docker works and you have set a registry on your machine, you can build your project using the Dockerfile and the html + config files. To build a new image `docker build -t localhost:32000/hello-world:latest images/hello-world/`.   
-   To Push to a hub/repository you should tag an image as we have done here just pointing to the repository url(in this case it's localhost:32000 because I'm using local registry addon provided by microk8s, but you can use docker hub if you want, or another private generic repo)
-   We are specifing that this is the latest hello-world image we are building so the hub will not cache anything there.
+   To build a new image we use `docker build -t localhost:32000/hello-world:latest images/hello-world/` that will include all files and folders on the path `images/hello-world`. By default it will search for a `Dockerfile` file under that directory, but you can change using the `--file` flag.
 ## 3. Push image to hub/repository
-   To be able to push a image to a repository, you need to tag with the correct url so docker can understand. We have already tagged the image when building so no need to do it again. If you don't, you can do it using `docker tag {imageID} localhost:32000/hello-world:latest`<br>  
-   Next step is to push to the registry using the image tag: `docker push localhost:32000/hello-world:latest`. (If you want to validate it, you can do it by doing `curl http://localhost:32000/v2/hello-world/tags/list`, this will return a json with correct data from registry)  
+   We have already tagged the image so no need to do it again. If you don't, you can do it using `docker tag {imageID} localhost:32000/hello-world:latest`<br>
+   Next step is to push to the registry using the image tag: `docker push localhost:32000/hello-world:latest`. (If you want to validate that the image is pushed correctly, you can do it by doing `curl http://localhost:32000/v2/hello-world/tags/list`, this will return a json with correct data from registry)
 </br>
 </br>
 
@@ -54,7 +51,7 @@ I use [MetalLB]() as the bare metal load balancer solution. I'll use the addon d
     </dl>
 
 ## 2. Building and deploying helm chart
-   Once you have install helm, you can deploy the hello-world chart that I made to consume the docker image we previusly built
+   Once you have install helm, you can deploy the hello-world chart, by providing the chart path and a name for the release.
     <dl>
       <dt>> `helm install hello-world-release k8s/hello-world/helm-chart`</dt>
     </dl>
@@ -63,7 +60,7 @@ I use [MetalLB]() as the bare metal load balancer solution. I'll use the addon d
       <dt>> `helm package k8s/hello-world/helm-chart -d k8s/hello-world/helm-chart`</dt>
       <dt>> `helm install hello-world-release k8s/hello-world/helm-chart/TBD`</dt>
     </dl>
-   You can now see the release using `helm list` and you can also check that the hello-world-release deployment is successfully running on the k8s cluster by doing `kubectl get deploy` and `kubectl get service`
+   You can now see the deployment of the release using `helm list` and the kubernetes deployment running using `kubectl get deploy` and `kubectl get service`
    We have created a `ClusterIP` service for this deployment so we can only access from inside the cluster. You can `kubectl exec -it $(k get pods --selector=app.kubernetes.io/name=hello-world --output name) -- sh` and now you can `curl http://localhost` to see the hello-world html site.  
 </br>
 </br>
